@@ -1,0 +1,13 @@
+fastapi
+typing
+uvicorn
+google-generativeai
+markdown-it-py
+numpy
+openpyxl
+pandas
+pillow
+PyPDF2
+python-docx
+python-dotenv
+requests
