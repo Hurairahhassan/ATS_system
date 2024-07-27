@@ -52,7 +52,7 @@ async def analyze_resumes(
 
         instruction = (
             "Evaluate each resume to determine if the candidate meets the specified role requirements, skills, and working experience."
-            "If all criteria are met, provide a brief report containing only the candidate's name and mobile number"
+            "If all criteria are met, provide a brief report containing only the candidate's name, mobile number and Email"
             "Ensure the evaluation is consistent and deterministic, such that the same resume always yields the same result without any changes. Do not include any additional information."
             "If any requirement specified by the user is not fulfilled, do not include that resume in the report Check in Role for every resume if role is not match so do not include that resume. You need most focus on role Do not include any additional information."
             "Focus on the role specified by the user, and if the role does not match, do not include that resume in the report. Do not include any additional information."
