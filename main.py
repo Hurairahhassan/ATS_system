@@ -3,12 +3,24 @@ from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
+from fastapi.middleware.cors import CORSMiddleware
 from io import BytesIO
 import PyPDF2
 from docx import Document
 from typing import List
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = ["*"],
+    allow_credentials=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+@app.get("/")
+async def rootMsg():
+    return "API IS RUNNING PERFECTLY"
+
 
 # Load environment variables
 load_dotenv()
