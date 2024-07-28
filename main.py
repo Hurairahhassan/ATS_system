@@ -1,26 +1,15 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
-from fastapi.middleware.cors import CORSMiddleware
 from io import BytesIO
 import PyPDF2
 from docx import Document
 from typing import List
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins = ["*"],
-    allow_credentials=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-@app.get("/")
-async def rootMsg():
-    return "API IS RUNNING PERFECTLY"
-
 
 # Load environment variables
 load_dotenv()
@@ -33,6 +22,23 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 # Initialize the model
 model = genai.GenerativeModel('gemini-1.5-flash')
+
+# Configure CORS
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = ["*"],
+    allow_credentials=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+@app.get("/")
+async def rootMsg():
+    return "API IS RUNNING PERFECTLY"
 
 # Extract text from files
 def extract_text(file_content, file_type):
@@ -58,6 +64,13 @@ async def analyze_resumes(
     experience: int = Form(...), 
     uploaded_files: List[UploadFile] = File(...)
 ):
+    if len(uploaded_files) > 10:
+        raise HTTPException(status_code=400, detail="You can upload up to 10 files at a time.")
+
+    for uploaded_file in uploaded_files:
+        if uploaded_file.content_type not in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+            raise HTTPException(status_code=400, detail="Only PDF and DOCX files are allowed.")
+
     prompts = []
     for uploaded_file in uploaded_files:
         resume_text = extract_text(await uploaded_file.read(), uploaded_file.content_type)
@@ -68,7 +81,7 @@ async def analyze_resumes(
             "Ensure the evaluation is consistent and deterministic, such that the same resume always yields the same result without any changes. Do not include any additional information."
             "If any requirement specified by the user is not fulfilled, do not include that resume in the report Check in Role for every resume if role is not match so do not include that resume. You need most focus on role Do not include any additional information."
             "Focus on the role specified by the user, and if the role does not match, do not include that resume in the report. Do not include any additional information."
-)
+        )
 
         prompt = (
             f"Position or Role: {role}\n"
@@ -89,4 +102,3 @@ async def analyze_resumes(
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
