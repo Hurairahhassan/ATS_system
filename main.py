@@ -99,6 +99,43 @@ async def analyze_resumes(
 
     return JSONResponse(content={"results": responses})
 
+@app.post("/pre-analyze-validate")
+async def analyze_resumes(
+    role: str = Form(...), 
+    skills: str = Form(...), 
+    experience: int = Form(...)
+):
+    prompt = (
+        f"`Role: {role}`, `Experience: {experience} years`, and `Skill: {skills}` are these all relevant to actual human skills and professions, or do they not match each other? Answer either clear `YES` or `NO`."
+    )
+    response = model.generate_content(prompt)
+    return JSONResponse(content={"result": response})
+
+
+# Route to upload and process resumes
+@app.post("/analyze-resumes-v2")
+async def analyze_resumesV2(
+    role: str = Form(...), 
+    skills: str = Form(...), 
+    experience: int = Form(...), 
+    uploaded_files: List[UploadFile] = File(...)
+):
+    main_prompt = ""
+    
+    for index, uploaded_file in enumerate(uploaded_files):
+        resume_text = extract_text(await uploaded_file.read(), uploaded_file.content_type)
+        main_prompt += f"~! Resume #{index}"
+        main_prompt += resume_text
+        main_prompt += "\n\n"
+
+    main_prompt += f"\n\n Evaluate each resume to determine if the candidate meets the specified role requirements, skills, and working experience. Rank down all resumes that match the criteria and exclude the ones that do not match. Then, return an array of objects containing the candidate's Name, Phone, and Email. Focus mostly on the role and ensure that the evaluation is consistent and deterministic, meaning the same resume always yields the same result without any changes. Do not include any additional information. The role should be `{role}`, the years of experience should be equal to or greater than `{experience}` and the skills should match `{skills}`"
+    main_prompt += f"\n Remember to return a JSON array of objects containing the candidate's Name, Phone, and Email."
+
+    response = model.generate_content(main_prompt)
+
+    return JSONResponse(content={"results": response})
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
