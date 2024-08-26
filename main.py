@@ -1,15 +1,32 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 from io import BytesIO
 import PyPDF2
+from fastapi.middleware.cors import CORSMiddleware
 from docx import Document
 from typing import List
 import uvicorn
 
 app = FastAPI()
+# Configure CORS
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = ["*"],
+    allow_credentials=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+@app.get("/")
+async def rootMsg():
+    return "API IS RUNNING PERFECTLY"
 
 # Load environment variables
 load_dotenv()
@@ -47,6 +64,12 @@ async def analyze_resumes(
     experience: int = Form(...), 
     uploaded_files: List[UploadFile] = File(...)
 ):
+    if len(uploaded_files) > 10:
+        raise HTTPException(status_code=400, detail="You can upload up to 10 files at a time.")
+
+    for uploaded_file in uploaded_files:
+        if uploaded_file.content_type not in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+            raise HTTPException(status_code=400, detail="Only PDF and DOCX files are allowed.")
     prompts = []
     for uploaded_file in uploaded_files:
         resume_text = extract_text(await uploaded_file.read(), uploaded_file.content_type)
