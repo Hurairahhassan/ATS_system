@@ -107,8 +107,10 @@ async def analyze_resumes(
     prompt = (
         f"`Role: {role}`, `Experience: {experience} years`, and `Skill: {skills}` are these all relevant to actual human skills and professions, or do they not match each other? Answer either clear `YES` or `NO`."
     )
+    responses_2 = []
     response = model.generate_content(prompt)
-    return JSONResponse(content={"result": response.text})
+    responses_2.append(response.text)
+    return JSONResponse(content={"result": responses_2})
 
 
 # Route to upload and process resumes
@@ -130,9 +132,11 @@ async def analyze_resumesV2(
     main_prompt += f"\n\n Evaluate each resume to determine if the candidate meets the specified role requirements, skills, and working experience. Rank down all resumes that match the criteria and exclude the ones that do not match. Then, return an array of objects containing the candidate's Name, Phone, and Email. Focus mostly on the role and ensure that the evaluation is consistent and deterministic, meaning the same resume always yields the same result without any changes. Do not include any additional information. The role should be `{role}`, the years of experience should be equal to or greater than `{experience}` and the skills should match `{skills}`"
     main_prompt += f"\n Remember to return a JSON array of objects containing the candidate's Name, Phone, and Email."
 
+    responses_3 = []
     response = model.generate_content(main_prompt)
+    responses_3.append(response.text)
 
-    return JSONResponse(content={"results": response.text})
+    return JSONResponse(content={"results": responses_3})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
